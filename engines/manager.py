@@ -5,6 +5,7 @@ Creates and manages AI engine instances with automatic registration
 
 import asyncio
 import logging
+import os
 from typing import Dict, Any, Optional, Type, List
 from datetime import datetime
 
@@ -402,16 +403,19 @@ class EngineConfigValidator:
         errors = []
         
         # GPU requirements
-        import torch
-        if not torch.cuda.is_available():
-            errors.append("CUDA GPU required for Local Llama engine")
-        
-        # Memory requirements
-        if torch.cuda.is_available():
-            gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-            min_memory = config.get("min_gpu_memory", 12)
-            if gpu_memory < min_memory:
-                errors.append(f"Insufficient GPU memory: {gpu_memory:.1f}GB < {min_memory}GB required")
+        try:
+            import torch
+            if not torch.cuda.is_available():
+                errors.append("CUDA GPU required for Local Llama engine")
+            
+            # Memory requirements
+            if torch.cuda.is_available():
+                gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                min_memory = config.get("min_gpu_memory", 12)
+                if gpu_memory < min_memory:
+                    errors.append(f"Insufficient GPU memory: {gpu_memory:.1f}GB < {min_memory}GB required")
+        except ImportError:
+            errors.append("PyTorch not available for Local Llama engine")
         
         return errors
     
